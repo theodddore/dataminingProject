@@ -23,18 +23,34 @@ numVisits = len(np.unique(data[:,1])) # Number of distinct visits
 
 dept = np.unique(data[:,5])
 
+flnum = np.unique(data[:,6])
+
 numDep = len(dept)
 #X = np.zeros((numVisits, len(daysIndex))) # Matrix containing the day of each visit
 
 counter = 7
 
-length = numDep + len(daysIndex)
+
 
 departmentIndex = {}
+filenumberIndex = {}
+
+
 
 for j in dept:
 	departmentIndex[j] = counter
 	counter += 1
+
+#cntr = len(daysIndex) + len(departmentIndex) + 1
+
+
+#for h in flnum:
+#	filenumberIndex[h] = cntr
+#	cntr += 1;
+
+
+
+length = numDep + len(daysIndex) + len(departmentIndex) + 2#len(filenumberIndex) + 1
 
 #departmentIndex = {department: i + 6 for i, department in enumerate(dept)}
 
@@ -43,17 +59,35 @@ Y = np.zeros(numVisits) # A matrix containing the trip types of the visits
 
 previousVisit = 0
 index = -1
+cnt = 0
 for i in range(data.shape[0]):
 	if data[i,1] != previousVisit: 		# If visit number has changed, initialize a new visit
+		if	index > -1 & cnt > 0:
+			X[index,length -2] = X[index,length -2]/cnt
 		index += 1						# The index of the new visit
+		cnt = 0
 		num_products = 1				# Set the number of products to 1
 		previousVisit = data[i,1]			# Set previous visit number to the current visit
 		X[index,daysIndex[data[i,2]]] = 1	# Set the index of the day of the visit to 1
 		X[index,departmentIndex[data[i,5]]] = 1
+		X[index,length -1] = float(data[i,4])
+		if data[i,6] == '' :
+			X[index, length - 2] = 0
+		else:
+			X[index, length - 2] = float(data[i,6])
+		cnt += 1
+		#X[index,filenumberIndex[data[i,6]]] = 1
 		Y[index] = int(data[i,0])	    # Store the type of the trip of the current visit
 	else: 								# If visit number has not changed, it's still the same visit
 		num_products += 1				# Increase the number of products of the current visit
 		X[index,departmentIndex[data[i,5]]] += 1
+		X[index,length -1] += float(data[i,4])
+		if data[i,6] == '' :
+			X[index, length - 2] = 0
+		else:
+			X[index, length - 2] += float(data[i,6])
+		cnt += 1
+		#X[index,filenumberIndex[data[i,6]]] += 1
 
 kf = KFold(X.shape[0], n_folds=10) # Initialize cross validation
 
